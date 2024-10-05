@@ -1,1 +1,4 @@
-powershell -ExecutionPolicy Bypass -File .\setup.ps1
+@echo off
+pushd %~dp0
+powershell -ExecutionPolicy Bypass -File ./Setup.ps1
+popd
