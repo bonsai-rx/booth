@@ -1,17 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<WorkflowBuilder Version="2.9.0"
+<WorkflowBuilder Version="2.9.1"
                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                 xmlns:vid="clr-namespace:Bonsai.Video;assembly=Bonsai.Video"
-                 xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core"
                  xmlns:cv="clr-namespace:Bonsai.Vision;assembly=Bonsai.Vision"
-                 xmlns:py="clr-namespace:Bonsai.Scripting.Python;assembly=Bonsai.Scripting.Python"
-                 xmlns:p1="clr-namespace:Bonsai.ML;assembly=Bonsai.ML"
-                 xmlns:p2="clr-namespace:Bonsai.ML.Lds.Python.Kinematics;assembly=Bonsai.ML.Lds.Python"
-                 xmlns:scr="clr-namespace:Bonsai.Scripting.Expressions;assembly=Bonsai.Scripting.Expressions"
-                 xmlns:p3="clr-namespace:Bonsai.ML.Python;assembly=Bonsai.ML.Python"
-                 xmlns:p4="clr-namespace:Bonsai.ML.Lds.Python;assembly=Bonsai.ML.Lds.Python"
+                 xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core"
                  xmlns:ard="clr-namespace:Bonsai.Arduino;assembly=Bonsai.Arduino"
                  xmlns:dsp="clr-namespace:Bonsai.Dsp;assembly=Bonsai.Dsp"
+                 xmlns:scr="clr-namespace:Bonsai.Scripting.Expressions;assembly=Bonsai.Scripting.Expressions"
                  xmlns:ui="clr-namespace:Bonsai.Design;assembly=Bonsai.Design"
                  xmlns="https://bonsai-rx.org/2018/workflow">
   <Workflow>
@@ -21,9 +15,14 @@
         <Workflow>
           <Nodes>
             <Expression xsi:type="Combinator">
-              <Combinator xsi:type="vid:VideoCaptureDevice">
-                <vid:Index>0</vid:Index>
-                <vid:CaptureProperties />
+              <Combinator xsi:type="cv:CameraCapture">
+                <cv:Index>2</cv:Index>
+                <cv:CaptureProperties />
+              </Combinator>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="cv:Flip">
+                <cv:Mode>Vertical</cv:Mode>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:PublishSubject">
@@ -37,13 +36,13 @@
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="cv:HsvThreshold">
                 <cv:Lower>
-                  <cv:Val0>39</cv:Val0>
-                  <cv:Val1>164</cv:Val1>
-                  <cv:Val2>2</cv:Val2>
+                  <cv:Val0>0</cv:Val0>
+                  <cv:Val1>157</cv:Val1>
+                  <cv:Val2>79</cv:Val2>
                   <cv:Val3>0</cv:Val3>
                 </cv:Lower>
                 <cv:Upper>
-                  <cv:Val0>179</cv:Val0>
+                  <cv:Val0>109</cv:Val0>
                   <cv:Val1>255</cv:Val1>
                   <cv:Val2>255</cv:Val2>
                   <cv:Val3>0</cv:Val3>
@@ -102,349 +101,7 @@
             <Edge From="7" To="8" Label="Source1" />
             <Edge From="8" To="9" Label="Source1" />
             <Edge From="9" To="10" Label="Source1" />
-          </Edges>
-        </Workflow>
-      </Expression>
-      <Expression xsi:type="GroupWorkflow">
-        <Name>LdsTracking</Name>
-        <Workflow>
-          <Nodes>
-            <Expression xsi:type="Combinator">
-              <Combinator xsi:type="py:CreateRuntime">
-                <py:PythonHome>.venv</py:PythonHome>
-              </Combinator>
-            </Expression>
-            <Expression xsi:type="IncludeWorkflow" Path="Bonsai.ML.Lds.Python:LoadLDSModule.bonsai" />
-            <Expression xsi:type="Combinator">
-              <Combinator xsi:type="py:GetRuntime" />
-            </Expression>
-            <Expression xsi:type="GroupWorkflow">
-              <Name>CreateKFModel</Name>
-              <Description>Creates a Kalman filter model for kinematics estimation based on the discrete Weiner process acceleration model.</Description>
-              <Workflow>
-                <Nodes>
-                  <Expression xsi:type="ExternalizedMapping">
-                    <Property Name="Name" DisplayName="Name" Description="The name of the Python variable referencing the model object." Category="ModelReference" />
-                  </Expression>
-                  <Expression xsi:type="Combinator">
-                    <Combinator xsi:type="p1:CreateModelReference">
-                      <p1:Name>model</p1:Name>
-                    </Combinator>
-                  </Expression>
-                  <Expression xsi:type="rx:BehaviorSubject">
-                    <Name>model</Name>
-                  </Expression>
-                  <Expression xsi:type="MemberSelector">
-                    <Selector>Name</Selector>
-                  </Expression>
-                  <Expression xsi:type="WorkflowInput">
-                    <Name>Source1</Name>
-                  </Expression>
-                  <Expression xsi:type="ExternalizedMapping">
-                    <Property Name="Fps" Description="The frames per second of the observations." Category="ModelParams" />
-                    <Property Name="Pos_x0" Description="The initial x position." Category="ModelParams" />
-                    <Property Name="Pos_y0" Description="The initial y position." Category="ModelParams" />
-                    <Property Name="Vel_x0" Description="The initial x velocity." Category="ModelParams" />
-                    <Property Name="Vel_y0" Description="The initial y velocity." Category="ModelParams" />
-                    <Property Name="Acc_x0" Description="The initial x acceleration." Category="ModelParams" />
-                    <Property Name="Acc_y0" Description="The initial y acceleration." Category="ModelParams" />
-                    <Property Name="Sigma_a" Description="A scalar value representing the measurement noise." Category="ModelParams" />
-                    <Property Name="Sigma_x" Description="A scalar value representing the prediction noise along the x axis." Category="ModelParams" />
-                    <Property Name="Sigma_y" Description="A scalar value representing the prediction noise along the y axis." Category="ModelParams" />
-                    <Property Name="Sqrt_diag_V0_value" Description="The initial value of the diagonal of the state covariance matrix." Category="ModelParams" />
-                  </Expression>
-                  <Expression xsi:type="Combinator">
-                    <Combinator xsi:type="p2:KFModelParameters">
-                      <p2:Pos_x0>320</p2:Pos_x0>
-                      <p2:Pos_y0>240</p2:Pos_y0>
-                      <p2:Vel_x0>0</p2:Vel_x0>
-                      <p2:Vel_y0>0</p2:Vel_y0>
-                      <p2:Acc_x0>0</p2:Acc_x0>
-                      <p2:Acc_y0>0</p2:Acc_y0>
-                      <p2:Sigma_a>1000</p2:Sigma_a>
-                      <p2:Sigma_x>10</p2:Sigma_x>
-                      <p2:Sigma_y>10</p2:Sigma_y>
-                      <p2:Sqrt_diag_V0_value>0.01</p2:Sqrt_diag_V0_value>
-                      <p2:Fps>60</p2:Fps>
-                    </Combinator>
-                  </Expression>
-                  <Expression xsi:type="Combinator">
-                    <Combinator xsi:type="rx:Zip" />
-                  </Expression>
-                  <Expression xsi:type="Combinator">
-                    <Combinator xsi:type="py:ObserveOnGIL" />
-                  </Expression>
-                  <Expression xsi:type="Format">
-                    <Format>{0} = KalmanFilterKinematics({1})</Format>
-                    <Selector>it.Item1, it.Item2</Selector>
-                  </Expression>
-                  <Expression xsi:type="InputMapping">
-                    <PropertyMappings>
-                      <Property Name="Script" Selector="it" />
-                    </PropertyMappings>
-                  </Expression>
-                  <Expression xsi:type="SubscribeSubject">
-                    <Name>LDSModule</Name>
-                  </Expression>
-                  <Expression xsi:type="PropertyMapping">
-                    <PropertyMappings>
-                      <Property Name="Module" />
-                    </PropertyMappings>
-                  </Expression>
-                  <Expression xsi:type="Combinator">
-                    <Combinator xsi:type="py:Exec">
-                      <py:Script>model = KalmanFilterKinematics(pos_x0=320,pos_y0=240,vel_x0=0,vel_y0=0,acc_x0=0,acc_y0=0,sigma_a=1000,sigma_x=10,sigma_y=10,sqrt_diag_V0_value=0.01,fps=60)</py:Script>
-                    </Combinator>
-                  </Expression>
-                  <Expression xsi:type="Combinator">
-                    <Combinator xsi:type="rx:Zip" />
-                  </Expression>
-                  <Expression xsi:type="InputMapping">
-                    <PropertyMappings>
-                      <Property Name="VariableName" Selector="it.Item2" />
-                    </PropertyMappings>
-                  </Expression>
-                  <Expression xsi:type="SubscribeSubject">
-                    <Name>LDSModule</Name>
-                  </Expression>
-                  <Expression xsi:type="PropertyMapping">
-                    <PropertyMappings>
-                      <Property Name="Module" />
-                    </PropertyMappings>
-                  </Expression>
-                  <Expression xsi:type="Combinator">
-                    <Combinator xsi:type="py:Get">
-                      <py:VariableName>model</py:VariableName>
-                    </Combinator>
-                  </Expression>
-                  <Expression xsi:type="Combinator">
-                    <Combinator xsi:type="p2:KFModelParameters">
-                      <p2:Pos_x0>0</p2:Pos_x0>
-                      <p2:Pos_y0>0</p2:Pos_y0>
-                      <p2:Vel_x0>0</p2:Vel_x0>
-                      <p2:Vel_y0>0</p2:Vel_y0>
-                      <p2:Acc_x0>0</p2:Acc_x0>
-                      <p2:Acc_y0>0</p2:Acc_y0>
-                      <p2:Sigma_a>0</p2:Sigma_a>
-                      <p2:Sigma_x>0</p2:Sigma_x>
-                      <p2:Sigma_y>0</p2:Sigma_y>
-                      <p2:Sqrt_diag_V0_value>0</p2:Sqrt_diag_V0_value>
-                      <p2:Fps>0</p2:Fps>
-                    </Combinator>
-                  </Expression>
-                  <Expression xsi:type="WorkflowOutput" />
-                </Nodes>
-                <Edges>
-                  <Edge From="0" To="1" Label="Source1" />
-                  <Edge From="0" To="2" Label="Source2" />
-                  <Edge From="1" To="2" Label="Source1" />
-                  <Edge From="2" To="3" Label="Source1" />
-                  <Edge From="3" To="7" Label="Source1" />
-                  <Edge From="3" To="14" Label="Source2" />
-                  <Edge From="4" To="6" Label="Source1" />
-                  <Edge From="5" To="6" Label="Source2" />
-                  <Edge From="6" To="7" Label="Source2" />
-                  <Edge From="7" To="8" Label="Source1" />
-                  <Edge From="8" To="9" Label="Source1" />
-                  <Edge From="9" To="10" Label="Source1" />
-                  <Edge From="10" To="13" Label="Source1" />
-                  <Edge From="11" To="12" Label="Source1" />
-                  <Edge From="12" To="13" Label="Source2" />
-                  <Edge From="13" To="14" Label="Source1" />
-                  <Edge From="14" To="15" Label="Source1" />
-                  <Edge From="15" To="18" Label="Source1" />
-                  <Edge From="16" To="17" Label="Source1" />
-                  <Edge From="17" To="18" Label="Source2" />
-                  <Edge From="18" To="19" Label="Source1" />
-                  <Edge From="19" To="20" Label="Source1" />
-                </Edges>
-              </Workflow>
-            </Expression>
-            <Expression xsi:type="SubscribeSubject">
-              <Name>LDSModule</Name>
-            </Expression>
-            <Expression xsi:type="Combinator">
-              <Combinator xsi:type="rx:SubscribeWhen" />
-            </Expression>
-            <Expression xsi:type="SubscribeSubject">
-              <Name>Position</Name>
-            </Expression>
-            <Expression xsi:type="GroupWorkflow">
-              <Name>PerformInference</Name>
-              <Description>Performs inference on the LDS kinematics model.</Description>
-              <Workflow>
-                <Nodes>
-                  <Expression xsi:type="WorkflowInput">
-                    <Name>Source1</Name>
-                  </Expression>
-                  <Expression xsi:type="scr:ExpressionTransform">
-                    <scr:Expression>new(it.X as x, it.Y as y)</scr:Expression>
-                  </Expression>
-                  <Expression xsi:type="Combinator">
-                    <Combinator xsi:type="p3:FormatToPython" />
-                  </Expression>
-                  <Expression xsi:type="Combinator">
-                    <Combinator xsi:type="py:ObserveOnGIL" />
-                  </Expression>
-                  <Expression xsi:type="ExternalizedMapping">
-                    <Property Name="Name" DisplayName="Name" Description="The name of the Python variable referencing the model object." Category="ModelReference" />
-                  </Expression>
-                  <Expression xsi:type="SubscribeSubject" TypeArguments="p1:ModelReference">
-                    <Name>model</Name>
-                  </Expression>
-                  <Expression xsi:type="MemberSelector">
-                    <Selector>Name</Selector>
-                  </Expression>
-                  <Expression xsi:type="Combinator">
-                    <Combinator xsi:type="rx:WithLatestFrom" />
-                  </Expression>
-                  <Expression xsi:type="rx:Sink">
-                    <Name>Predict</Name>
-                    <Workflow>
-                      <Nodes>
-                        <Expression xsi:type="WorkflowInput">
-                          <Name>Source1</Name>
-                        </Expression>
-                        <Expression xsi:type="Format">
-                          <Format>{0}.predict()</Format>
-                          <Selector>it.Item2</Selector>
-                        </Expression>
-                        <Expression xsi:type="InputMapping">
-                          <PropertyMappings>
-                            <Property Name="Script" Selector="it" />
-                          </PropertyMappings>
-                        </Expression>
-                        <Expression xsi:type="SubscribeSubject">
-                          <Name>LDSModule</Name>
-                        </Expression>
-                        <Expression xsi:type="PropertyMapping">
-                          <PropertyMappings>
-                            <Property Name="Module" />
-                          </PropertyMappings>
-                        </Expression>
-                        <Expression xsi:type="Combinator">
-                          <Combinator xsi:type="py:Exec">
-                            <py:Script>model.predict()</py:Script>
-                          </Combinator>
-                        </Expression>
-                        <Expression xsi:type="WorkflowOutput" />
-                      </Nodes>
-                      <Edges>
-                        <Edge From="0" To="1" Label="Source1" />
-                        <Edge From="1" To="2" Label="Source1" />
-                        <Edge From="2" To="5" Label="Source1" />
-                        <Edge From="3" To="4" Label="Source1" />
-                        <Edge From="4" To="5" Label="Source2" />
-                        <Edge From="5" To="6" Label="Source1" />
-                      </Edges>
-                    </Workflow>
-                  </Expression>
-                  <Expression xsi:type="rx:Sink">
-                    <Name>Update</Name>
-                    <Workflow>
-                      <Nodes>
-                        <Expression xsi:type="WorkflowInput">
-                          <Name>Source1</Name>
-                        </Expression>
-                        <Expression xsi:type="Format">
-                          <Format>{0}.update(**{1})</Format>
-                          <Selector>it.Item2, it.Item1</Selector>
-                        </Expression>
-                        <Expression xsi:type="InputMapping">
-                          <PropertyMappings>
-                            <Property Name="Script" Selector="it" />
-                          </PropertyMappings>
-                        </Expression>
-                        <Expression xsi:type="SubscribeSubject">
-                          <Name>LDSModule</Name>
-                        </Expression>
-                        <Expression xsi:type="PropertyMapping">
-                          <PropertyMappings>
-                            <Property Name="Module" />
-                          </PropertyMappings>
-                        </Expression>
-                        <Expression xsi:type="Combinator">
-                          <Combinator xsi:type="py:Exec">
-                            <py:Script>model.update(**{"x": 270.7892, "y": 335.0562})</py:Script>
-                          </Combinator>
-                        </Expression>
-                        <Expression xsi:type="WorkflowOutput" />
-                      </Nodes>
-                      <Edges>
-                        <Edge From="0" To="1" Label="Source1" />
-                        <Edge From="1" To="2" Label="Source1" />
-                        <Edge From="2" To="5" Label="Source1" />
-                        <Edge From="3" To="4" Label="Source1" />
-                        <Edge From="4" To="5" Label="Source2" />
-                        <Edge From="5" To="6" Label="Source1" />
-                      </Edges>
-                    </Workflow>
-                  </Expression>
-                  <Expression xsi:type="InputMapping">
-                    <PropertyMappings>
-                      <Property Name="VariableName" Selector="it.Item2" />
-                    </PropertyMappings>
-                  </Expression>
-                  <Expression xsi:type="SubscribeSubject">
-                    <Name>LDSModule</Name>
-                  </Expression>
-                  <Expression xsi:type="PropertyMapping">
-                    <PropertyMappings>
-                      <Property Name="Module" />
-                    </PropertyMappings>
-                  </Expression>
-                  <Expression xsi:type="Combinator">
-                    <Combinator xsi:type="py:Get">
-                      <py:VariableName>model</py:VariableName>
-                    </Combinator>
-                  </Expression>
-                  <Expression xsi:type="Combinator">
-                    <Combinator xsi:type="p4:State" />
-                  </Expression>
-                  <Expression xsi:type="Combinator">
-                    <Combinator xsi:type="p2:KinematicState" />
-                  </Expression>
-                  <Expression xsi:type="WorkflowOutput" />
-                </Nodes>
-                <Edges>
-                  <Edge From="0" To="1" Label="Source1" />
-                  <Edge From="1" To="2" Label="Source1" />
-                  <Edge From="2" To="3" Label="Source1" />
-                  <Edge From="3" To="7" Label="Source1" />
-                  <Edge From="4" To="5" Label="Source1" />
-                  <Edge From="5" To="6" Label="Source1" />
-                  <Edge From="6" To="7" Label="Source2" />
-                  <Edge From="7" To="8" Label="Source1" />
-                  <Edge From="8" To="9" Label="Source1" />
-                  <Edge From="9" To="10" Label="Source1" />
-                  <Edge From="10" To="13" Label="Source1" />
-                  <Edge From="11" To="12" Label="Source1" />
-                  <Edge From="12" To="13" Label="Source2" />
-                  <Edge From="13" To="14" Label="Source1" />
-                  <Edge From="14" To="15" Label="Source1" />
-                  <Edge From="15" To="16" Label="Source1" />
-                </Edges>
-              </Workflow>
-            </Expression>
-            <Expression xsi:type="rx:PublishSubject">
-              <Name>InferredPosition</Name>
-            </Expression>
-            <Expression xsi:type="SubscribeSubject">
-              <Name>model</Name>
-            </Expression>
-            <Expression xsi:type="Combinator">
-              <Combinator xsi:type="rx:SubscribeWhen" />
-            </Expression>
-          </Nodes>
-          <Edges>
-            <Edge From="0" To="1" Label="Source1" />
-            <Edge From="2" To="3" Label="Source1" />
-            <Edge From="3" To="5" Label="Source1" />
-            <Edge From="4" To="5" Label="Source2" />
-            <Edge From="6" To="7" Label="Source1" />
-            <Edge From="7" To="8" Label="Source1" />
-            <Edge From="8" To="10" Label="Source1" />
-            <Edge From="9" To="10" Label="Source2" />
+            <Edge From="10" To="11" Label="Source1" />
           </Edges>
         </Workflow>
       </Expression>
@@ -455,7 +112,7 @@
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="ard:CreateArduino">
                 <ard:Name>PanTilt</ard:Name>
-                <ard:PortName>COM33</ard:PortName>
+                <ard:PortName>COM5</ard:PortName>
                 <ard:BaudRate>57600</ard:BaudRate>
                 <ard:SamplingInterval>10</ard:SamplingInterval>
               </Combinator>
@@ -465,19 +122,32 @@
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="DoubleProperty">
-                <Value>90</Value>
+                <Value>0.5</Value>
               </Combinator>
+            </Expression>
+            <Expression xsi:type="Multiply">
+              <Operand xsi:type="DoubleProperty">
+                <Value>180</Value>
+              </Operand>
             </Expression>
             <Expression xsi:type="rx:BehaviorSubject">
               <Name>PanAngle</Name>
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="DoubleProperty">
-                <Value>150</Value>
+                <Value>0.97282608695652173</Value>
               </Combinator>
+            </Expression>
+            <Expression xsi:type="Multiply">
+              <Operand xsi:type="DoubleProperty">
+                <Value>180</Value>
+              </Operand>
             </Expression>
             <Expression xsi:type="rx:BehaviorSubject">
               <Name>TiltAngle</Name>
+            </Expression>
+            <Expression xsi:type="rx:BehaviorSubject">
+              <Name>_TiltAngle</Name>
             </Expression>
             <Expression xsi:type="SubscribeSubject">
               <Name>TiltAngle</Name>
@@ -485,7 +155,7 @@
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="ard:ServoOutput">
                 <ard:PortName>PanTilt</ard:PortName>
-                <ard:Pin>8</ard:Pin>
+                <ard:Pin>4</ard:Pin>
               </Combinator>
             </Expression>
             <Expression xsi:type="SubscribeSubject">
@@ -500,7 +170,7 @@
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="ard:ServoOutput">
                 <ard:PortName>PanTilt</ard:PortName>
-                <ard:Pin>10</ard:Pin>
+                <ard:Pin>5</ard:Pin>
               </Combinator>
             </Expression>
             <Expression xsi:type="SubscribeSubject">
@@ -513,13 +183,16 @@
           <Edges>
             <Edge From="0" To="1" Label="Source1" />
             <Edge From="2" To="3" Label="Source1" />
-            <Edge From="4" To="5" Label="Source1" />
+            <Edge From="3" To="4" Label="Source1" />
+            <Edge From="5" To="6" Label="Source1" />
             <Edge From="6" To="7" Label="Source1" />
-            <Edge From="7" To="9" Label="Source1" />
-            <Edge From="8" To="9" Label="Source2" />
-            <Edge From="10" To="11" Label="Source1" />
-            <Edge From="11" To="13" Label="Source1" />
-            <Edge From="12" To="13" Label="Source2" />
+            <Edge From="7" To="8" Label="Source1" />
+            <Edge From="9" To="10" Label="Source1" />
+            <Edge From="10" To="12" Label="Source1" />
+            <Edge From="11" To="12" Label="Source2" />
+            <Edge From="13" To="14" Label="Source1" />
+            <Edge From="14" To="16" Label="Source1" />
+            <Edge From="15" To="16" Label="Source2" />
           </Edges>
         </Workflow>
       </Expression>
@@ -528,20 +201,25 @@
         <Workflow>
           <Nodes>
             <Expression xsi:type="SubscribeSubject">
-              <Name>InferredPosition</Name>
-            </Expression>
-            <Expression xsi:type="scr:ExpressionTransform">
-              <scr:Expression>new(it.Position.X.Mean as X, it.Position.Y.Mean as Y)</scr:Expression>
+              <Name>Position</Name>
             </Expression>
             <Expression xsi:type="MemberSelector">
               <Selector>X</Selector>
             </Expression>
+            <Expression xsi:type="SubscribeSubject">
+              <Name>Image</Name>
+            </Expression>
+            <Expression xsi:type="PropertyMapping">
+              <PropertyMappings>
+                <Property Name="Max" Selector="Width" />
+              </PropertyMappings>
+            </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="dsp:Rescale">
                 <dsp:Min>0</dsp:Min>
-                <dsp:Max>680</dsp:Max>
-                <dsp:RangeMin>-3</dsp:RangeMin>
-                <dsp:RangeMax>3</dsp:RangeMax>
+                <dsp:Max>640</dsp:Max>
+                <dsp:RangeMin>-1</dsp:RangeMin>
+                <dsp:RangeMax>1</dsp:RangeMax>
                 <dsp:RescaleType>Clamp</dsp:RescaleType>
               </Combinator>
             </Expression>
@@ -559,30 +237,74 @@
 Accumulation + Value as NewValue,
 Accumulation as OldValue)</scr:Expression>
                   </Expression>
+                  <Expression xsi:type="ExternalizedMapping">
+                    <Property Name="Value" DisplayName="Max" />
+                  </Expression>
+                  <Expression xsi:type="Combinator">
+                    <Combinator xsi:type="FloatProperty">
+                      <Value>160</Value>
+                    </Combinator>
+                  </Expression>
+                  <Expression xsi:type="ExternalizedMapping">
+                    <Property Name="Value" DisplayName="Min" />
+                  </Expression>
+                  <Expression xsi:type="Combinator">
+                    <Combinator xsi:type="FloatProperty">
+                      <Value>20</Value>
+                    </Combinator>
+                  </Expression>
+                  <Expression xsi:type="Combinator">
+                    <Combinator xsi:type="rx:CombineLatest" />
+                  </Expression>
+                  <Expression xsi:type="Combinator">
+                    <Combinator xsi:type="rx:WithLatestFrom" />
+                  </Expression>
                   <Expression xsi:type="scr:ExpressionTransform">
-                    <scr:Expression>20 &lt; NewValue &amp;&amp; NewValue &lt; 160 ? NewValue : OldValue</scr:Expression>
+                    <scr:Expression>new(Item1.NewValue as NewValue,
+Item1.OldValue as OldValue,Item2.Item1 as MaxValue,Item2.Item2 as MinValue)</scr:Expression>
+                  </Expression>
+                  <Expression xsi:type="scr:ExpressionTransform">
+                    <scr:Expression>MinValue &lt; NewValue &amp;&amp; NewValue &lt; MaxValue ? NewValue : OldValue</scr:Expression>
                   </Expression>
                   <Expression xsi:type="WorkflowOutput" />
                 </Nodes>
                 <Edges>
                   <Edge From="0" To="1" Label="Source1" />
-                  <Edge From="1" To="2" Label="Source1" />
+                  <Edge From="1" To="7" Label="Source1" />
                   <Edge From="2" To="3" Label="Source1" />
+                  <Edge From="3" To="6" Label="Source1" />
+                  <Edge From="4" To="5" Label="Source1" />
+                  <Edge From="5" To="6" Label="Source2" />
+                  <Edge From="6" To="7" Label="Source2" />
+                  <Edge From="7" To="8" Label="Source1" />
+                  <Edge From="8" To="9" Label="Source1" />
+                  <Edge From="9" To="10" Label="Source1" />
                 </Edges>
               </Workflow>
             </Expression>
             <Expression xsi:type="MulticastSubject">
               <Name>PanAngle</Name>
             </Expression>
+            <Expression xsi:type="SubscribeSubject">
+              <Name>Position</Name>
+            </Expression>
             <Expression xsi:type="MemberSelector">
               <Selector>Y</Selector>
+            </Expression>
+            <Expression xsi:type="SubscribeSubject">
+              <Name>Image</Name>
+            </Expression>
+            <Expression xsi:type="PropertyMapping">
+              <PropertyMappings>
+                <Property Name="Max" Selector="Height" />
+              </PropertyMappings>
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="dsp:Rescale">
                 <dsp:Min>0</dsp:Min>
-                <dsp:Max>480</dsp:Max>
-                <dsp:RangeMin>1.5</dsp:RangeMin>
-                <dsp:RangeMax>-0.5</dsp:RangeMax>
+                <dsp:Max>360</dsp:Max>
+                <dsp:RangeMin>-0.5</dsp:RangeMin>
+                <dsp:RangeMax>0.5</dsp:RangeMax>
                 <dsp:RescaleType>Clamp</dsp:RescaleType>
               </Combinator>
             </Expression>
@@ -600,15 +322,48 @@ Accumulation as OldValue)</scr:Expression>
 Accumulation + Value as NewValue,
 Accumulation as OldValue)</scr:Expression>
                   </Expression>
+                  <Expression xsi:type="ExternalizedMapping">
+                    <Property Name="Value" DisplayName="Max" />
+                  </Expression>
+                  <Expression xsi:type="Combinator">
+                    <Combinator xsi:type="FloatProperty">
+                      <Value>180</Value>
+                    </Combinator>
+                  </Expression>
+                  <Expression xsi:type="ExternalizedMapping">
+                    <Property Name="Value" DisplayName="Min" />
+                  </Expression>
+                  <Expression xsi:type="Combinator">
+                    <Combinator xsi:type="FloatProperty">
+                      <Value>0</Value>
+                    </Combinator>
+                  </Expression>
+                  <Expression xsi:type="Combinator">
+                    <Combinator xsi:type="rx:CombineLatest" />
+                  </Expression>
+                  <Expression xsi:type="Combinator">
+                    <Combinator xsi:type="rx:WithLatestFrom" />
+                  </Expression>
                   <Expression xsi:type="scr:ExpressionTransform">
-                    <scr:Expression>90 &lt; NewValue &amp;&amp; NewValue &lt; 180 ? NewValue : OldValue</scr:Expression>
+                    <scr:Expression>new(Item1.NewValue as NewValue,
+Item1.OldValue as OldValue,Item2.Item1 as MaxValue,Item2.Item2 as MinValue)</scr:Expression>
+                  </Expression>
+                  <Expression xsi:type="scr:ExpressionTransform">
+                    <scr:Expression>MinValue &lt; NewValue &amp;&amp; NewValue &lt; MaxValue ? NewValue : OldValue</scr:Expression>
                   </Expression>
                   <Expression xsi:type="WorkflowOutput" />
                 </Nodes>
                 <Edges>
                   <Edge From="0" To="1" Label="Source1" />
-                  <Edge From="1" To="2" Label="Source1" />
+                  <Edge From="1" To="7" Label="Source1" />
                   <Edge From="2" To="3" Label="Source1" />
+                  <Edge From="3" To="6" Label="Source1" />
+                  <Edge From="4" To="5" Label="Source1" />
+                  <Edge From="5" To="6" Label="Source2" />
+                  <Edge From="6" To="7" Label="Source2" />
+                  <Edge From="7" To="8" Label="Source1" />
+                  <Edge From="8" To="9" Label="Source1" />
+                  <Edge From="9" To="10" Label="Source1" />
                 </Edges>
               </Workflow>
             </Expression>
@@ -618,16 +373,19 @@ Accumulation as OldValue)</scr:Expression>
           </Nodes>
           <Edges>
             <Edge From="0" To="1" Label="Source1" />
-            <Edge From="1" To="2" Label="Source1" />
-            <Edge From="1" To="7" Label="Source1" />
+            <Edge From="1" To="4" Label="Source1" />
             <Edge From="2" To="3" Label="Source1" />
-            <Edge From="3" To="5" Label="Source1" />
-            <Edge From="4" To="5" Label="Source2" />
-            <Edge From="5" To="6" Label="Source1" />
-            <Edge From="7" To="8" Label="Source1" />
-            <Edge From="8" To="10" Label="Source1" />
-            <Edge From="9" To="10" Label="Source2" />
+            <Edge From="3" To="4" Label="Source2" />
+            <Edge From="4" To="6" Label="Source1" />
+            <Edge From="5" To="6" Label="Source2" />
+            <Edge From="6" To="7" Label="Source1" />
+            <Edge From="8" To="9" Label="Source1" />
+            <Edge From="9" To="12" Label="Source1" />
             <Edge From="10" To="11" Label="Source1" />
+            <Edge From="11" To="12" Label="Source2" />
+            <Edge From="12" To="14" Label="Source1" />
+            <Edge From="13" To="14" Label="Source2" />
+            <Edge From="14" To="15" Label="Source1" />
           </Edges>
         </Workflow>
       </Expression>
@@ -646,9 +404,9 @@ Accumulation as OldValue)</scr:Expression>
       </Expression>
     </Nodes>
     <Edges>
+      <Edge From="3" To="4" Label="Source1" />
       <Edge From="4" To="5" Label="Source1" />
       <Edge From="5" To="6" Label="Source1" />
-      <Edge From="6" To="7" Label="Source1" />
     </Edges>
   </Workflow>
 </WorkflowBuilder>
