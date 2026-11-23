@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<WorkflowBuilder Version="2.9.0"
+<WorkflowBuilder Version="2.9.1"
                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                  xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core"
                  xmlns:harp="clr-namespace:Bonsai.Harp;assembly=Bonsai.Harp"
@@ -90,7 +90,7 @@
               <Combinator xsi:type="p2:Sample" />
             </Expression>
             <Expression xsi:type="scr:ExpressionTransform">
-              <scr:Expression>Timespan.FromSeconds(it)</scr:Expression>
+              <scr:Expression>TimeSpan.FromSeconds(it)</scr:Expression>
             </Expression>
             <Expression xsi:type="PropertyMapping">
               <PropertyMappings>
@@ -136,7 +136,7 @@
               </Combinator>
             </Expression>
             <Expression xsi:type="scr:ExpressionTransform">
-              <scr:Expression>Timespan.FromMilliseconds(it)</scr:Expression>
+              <scr:Expression>TimeSpan.FromMilliseconds(it)</scr:Expression>
             </Expression>
             <Expression xsi:type="PropertyMapping">
               <PropertyMappings>
